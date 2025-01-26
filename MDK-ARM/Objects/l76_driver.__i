@@ -1,0 +1,6 @@
+-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0 -c
+-fno-rtti -funsigned-char -fshort-enums -fshort-wchar
+-D__MICROLIB -gdwarf-4 -O0 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../Drivers/CMSIS/Inculde -I ../Drivers/FM33LG0xx_FL_Driver/Inc -I ../Drivers/CMSIS/Device/FM/FM33xx/Include -I ../MF-config/Inc -I ../Inc
+-IC:/Users/lysql/AppData/Local/Arm/Packs/FMSH/FM33LG0XX_DFP/3.0.1/Device/Include
+-D__UVISION_VERSION="538" -DFM33LG0xx -DFM33LG0XX -DUSE_FULL_ASSERT
+-o ./objects/l76_driver.o -MD "../Src/L76_Driver.c"
