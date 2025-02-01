@@ -108,6 +108,8 @@ typedef struct
 	float	xanglenofilter;
 	float	yanglenofilter;
 	float	zanglenofilter;
+	float	vecax;
+	float	vecax0;
 	uint16_t	nextpoint;
 	uint16_t	startpoint;
 }GryStructTyp;

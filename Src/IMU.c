@@ -551,16 +551,18 @@ void GetDryrate0(void)
 //	static		float 	xdyrate[IMUDataLength];
 //	static		float 	ydyrate[IMUDataLength];
 //	static		float 	zdyrate[IMUDataLength];
-	float				xtmpt, ytmpt, ztmpt;
+	// float				xtmpt, ytmpt, ztmpt;
 //	static      float   rate[IMUDataLength];
-	static		float	sumx = 0;
-	static		float	sumy = 0;
-	static		float	sumz = 0;
+	static		int32_t	sumx = 0;
+	static		int32_t	sumy = 0;
+	static		int32_t	sumz = 0;
+
+	float				avex = 0, avey = 0, avez = 0;
 	static		float	sumrate = 0;
 	float				sumratetemp;
 	
-	static      uint16_t i = 0, j = 0;
-	uint8_t		buf[50];
+	// static      uint16_t i = 0, j = 0;
+	// uint8_t		buf[50];
 	static      bool	flag_xr_over, flag_yr_over, flag_zr_over;
 	static      bool	flag_dry_over;
 	static		float	xLmg;
@@ -569,6 +571,10 @@ void GetDryrate0(void)
 	float			mg;
 	static		bool	flag_init;
 	static		uint8_t	accstatic;
+	GryRwaTyp	gryraw;
+	static		uint16_t	rear;
+	static		uint16_t 	count;
+	static		uint16_t 	front;
 
 	if(flag_init == false)
 		{
@@ -583,7 +589,8 @@ void GetDryrate0(void)
     		FlagStatusClear(&FlagGlobal, Flag_GryReady);
 			GetAcc((XLRwaTyp *)&XYZXLRaw.XLRwa);
 //			FL_DelayMs(1);
-			GetGry((GryRwaTyp *)&XYZGyRaw.GryRwa[XYZGyRaw.nextpoint]);
+			// GetGry((GryRwaTyp *)&XYZGyRaw.GryRwa[XYZGyRaw.nextpoint]);
+			GetGry(&gryraw);
 			if(!FlagStatusIs(FlagGlobal, Flag_InitDy))
 				{
 					XYZGyRaw.nextpoint++;
@@ -607,7 +614,7 @@ void GetDryrate0(void)
 			else
 				{
 					DyDiscardCnt++;
-					if(DyDiscardCnt == 1)//135)
+					if(DyDiscardCnt == 135)//135)
 						{
 							DyDiscardCnt = 0;
 							FlagStatusClear(&FlagGlobal, Flag_InitDy);
@@ -621,119 +628,79 @@ void GetDryrate0(void)
 	if(accstatic == true)
 		{
 			LEDOn;
-			if(XYZGyRaw.startpoint != XYZGyRaw.nextpoint)
-				{
-
-//					xdyrate[i] = lsm6dsm_from_1000dps_to_dps(XYZGyRaw.GryRwa[XYZGyRaw.startpoint].xraw);
-//					ydyrate[i] = lsm6dsm_from_1000dps_to_dps(XYZGyRaw.GryRwa[XYZGyRaw.startpoint].yraw);
-//					zdyrate[i] = lsm6dsm_from_1000dps_to_dps(XYZGyRaw.GryRwa[XYZGyRaw.startpoint].zraw);
-
-//					sumx += xtmpt = lsm6dsm_from_1000dps_to_dps(XYZGyRaw.GryRwa[XYZGyRaw.startpoint].xraw);
-//					sumy += ytmpt = lsm6dsm_from_1000dps_to_dps(XYZGyRaw.GryRwa[XYZGyRaw.startpoint].yraw);
-//					sumz += ztmpt = lsm6dsm_from_1000dps_to_dps(XYZGyRaw.GryRwa[XYZGyRaw.startpoint].zraw);
-
-					sumx += xtmpt = XYZGyRaw.GryRwa[XYZGyRaw.startpoint].xraw;
-					sumy += ytmpt = XYZGyRaw.GryRwa[XYZGyRaw.startpoint].yraw;
-					sumz += ztmpt = XYZGyRaw.GryRwa[XYZGyRaw.startpoint].zraw;
-
-
-
-
-					i++;
-
-					XYZGyRaw.startpoint++;
-					XYZGyRaw.startpoint %= DryDatalebgth;
-//					sumx += xdyrate[i];
-//					sumy += ydyrate[i];
-//					sumz += zdyrate[i];
-//					if(i == IMUDataLength - 1)
-					if(i == IMUDataLength)
-						{
-							
-							sumx /= IMUDataLength;
-							sumy /= IMUDataLength;
-							sumz /= IMUDataLength;
-							if(fabs(xtmpt - sumx)<2)
-								{
-									XYZGyRaw.xrrate0 = sumx;
-									flag_xr_over = true;
-								}
-							if(fabs(ytmpt- sumy)<2)
-								{
-									XYZGyRaw.yrrate0 = sumy;
-									flag_yr_over = true;
-								}
-							if(fabs(ztmpt - sumz)<2)
-								{
-									XYZGyRaw.zrrate0 = sumz;
-									flag_zr_over = true;
-								}
-							sumx = 0;
-							sumy = 0;
-							sumz = 0;
-							i = 0;
-						}
-
-				
-				
-					XYZGyRaw.xrrate = lsm6dsm_from_1000dps_to_dps(XYZGyRaw.GryRwa[XYZGyRaw.startpoint].xraw) - XYZGyRaw.xrrate0;
-					XYZGyRaw.yrrate = lsm6dsm_from_1000dps_to_dps(XYZGyRaw.GryRwa[XYZGyRaw.startpoint].yraw) - XYZGyRaw.yrrate0;
-					XYZGyRaw.zrrate = lsm6dsm_from_1000dps_to_dps(XYZGyRaw.GryRwa[XYZGyRaw.startpoint].zraw) - XYZGyRaw.zrrate0;
-//					rate[j] = sqrt(pow(XYZGyRaw.xrrate, 2) + pow(XYZGyRaw.yrrate, 2) + pow(XYZGyRaw.zrrate, 2));
-//					XYZGyRaw.rate = rate[j];
-					sumrate += sumratetemp = sqrt(pow(XYZGyRaw.xrrate, 2) + pow(XYZGyRaw.yrrate, 2) + pow(XYZGyRaw.zrrate, 2));
-					j++;
-					
-//					sumrate += rate[j];
-					if(j == IMUDataLength)
-						{
-							
-							sumrate /= IMUDataLength;
-				
-							if(fabs(sumratetemp - sumrate)<0.5)
-								{
-									XYZGyRaw.rate0 = sumrate;
-//									LEDOn;//debug lysq
-									
-									flag_dry_over = true;
-								}
-							sumrate = 0;
-							j = 0;
-						}
-
-				
-				
-					if(flag_dry_over == true && flag_zr_over == true && flag_yr_over == true && flag_xr_over == true)
-						{
-							flag_dry_over = false;
-							flag_zr_over = false;
-							flag_yr_over = false;
-							flag_xr_over = false;
-							LEDOff;
-							FlagStatusClear(&FlagGlobal, Flag_GetG0);
-							flag_init = false;
-							accstatic = false;
-							lsm6dsmActInit();
-						}
-				
-
+			if (count < DryDatalebgth) 
+			{
+				// é˜Ÿåˆ—æœªæ»¡ï¼Œç›´æŽ¥åŠ å…¥
+				XYZGyRaw.GryRwa[rear].xraw = gryraw.xraw;
+				XYZGyRaw.GryRwa[rear].yraw = gryraw.yraw;
+				XYZGyRaw.GryRwa[rear].zraw = gryraw.zraw;
+				sumx += gryraw.xraw;
+				sumy += gryraw.yraw;
+				sumz += gryraw.zraw;
+				rear = (rear + 1) % DryDatalebgth;// å¾ªçŽ¯ç§»åŠ¨rearæŒ‡é’ˆ
+				count++;
+			} 
+			else 
+			{
+				// é˜Ÿåˆ—å·²æ»¡ï¼Œåˆ é™¤é˜Ÿå¤´å…ƒç´ ï¼ŒåŠ å…¥æ–°å…ƒç´ 
+				sumx -= XYZGyRaw.GryRwa[front].xraw;  // åˆ é™¤é˜Ÿå¤´å…ƒç´ çš„å€¼
+				sumy -= XYZGyRaw.GryRwa[front].yraw;
+				sumz -= XYZGyRaw.GryRwa[front].zraw;
 			
+				XYZGyRaw.GryRwa[front].xraw = gryraw.xraw;
+				XYZGyRaw.GryRwa[front].yraw = gryraw.yraw;
+				XYZGyRaw.GryRwa[front].zraw = gryraw.zraw;
+
+				sumx += gryraw.xraw;
+				sumy += gryraw.yraw;
+				sumz += gryraw.zraw;
+
+				avex = sumx/DryDatalebgth;
+				avey = sumy/DryDatalebgth;
+				avez = sumz/DryDatalebgth;
+
+				front = (front + 1) % DryDatalebgth;	// å¾ªçŽ¯ç§»åŠ¨frontæŒ‡é’ˆ
+				rear = (rear + 1) % DryDatalebgth;		// æ›´æ–°rearæŒ‡é’ˆ 
+			}
+
+
+			if(fabs(gryraw.xraw - avex)<2)
+				{
+					XYZGyRaw.xrrate0 = avex;
+					flag_xr_over = true;
+				}
+			if(fabs(gryraw.yraw- avey)<2)
+				{
+					XYZGyRaw.yrrate0 = avey;
+					flag_yr_over = true;
+				}
+			if(fabs(gryraw.zraw - avez)<2)
+				{
+					XYZGyRaw.zrrate0 = avez;
+					flag_zr_over = true;
 				}
 
+			if(flag_xr_over == true && flag_yr_over == true && flag_zr_over == true)
+			{
+				XYZGyRaw.xrrate0 = lsm6dsm_from_1000dps_to_dps(avex);
+				XYZGyRaw.yrrate0 = lsm6dsm_from_1000dps_to_dps(avey);
+				XYZGyRaw.zrrate0 = lsm6dsm_from_1000dps_to_dps(avez);
+				XYZGyRaw.vecax0  = sqrt(pow(XYZGyRaw.xrrate0, 2) + pow(XYZGyRaw.yrrate0, 2) + pow(XYZGyRaw.zrrate0, 2));
+				LEDOff;
+				FlagStatusClear(&FlagGlobal, Flag_GetG0);
+				lsm6dsmActInit();
 
+				flag_xr_over = false;
+				flag_yr_over = false;
+				flag_zr_over = false;
+				accstatic = false;
+				flag_init = false;
+				count = 0;
+				front = 0;
+				rear = 0;
 
+			}
 		}
-		else
-		{
-			i = 0;
-			sumx = 0;
-			sumy = 0;
-			sumz = 0;
-			j = 0;
-			sumrate = 0;
-		}
-
-
 
 }
 
@@ -792,116 +759,46 @@ void GetGsense(void)
 
 		lsm6dsm_all_sources_get(SPI2, &status);
 
-//		if(status.wake_up_src.wu_ia == true)
-//			{
-//				flagact = true;
-//			}
-//		else 
-			if(status.wake_up_src.sleep_state_ia == true)
-			{
-				flagact = FALSE;
-				onemotion = FALSE;
-//				lsm6dsm_gy_sleep_mode_set(SPI2, 1);
-				FlagStatusClear(&FlagGlobal, Flag_MotionDetect);
-				FlagStatusSet(&FlagGlobal, Flag_WirlessCom);
-				LEDOff;
-				UpdateData.valvedegree = (int32_t) XYZGyRaw.zangle;
-//				ModeSet(NormalMode);
-//				memset(buf,0,sizeof(buf));
-//				sprintf((char *)buf, "abc:%f,%f,%f,%f, %d\r\n", XYZGyRaw.xangle, XYZGyRaw.yangle, XYZGyRaw.zangle, XYZGyRaw.angle, UpdateData.valvedegree);
-//				HAL_UART_TransmitStr(LPUART2, buf, 1000);
-			}
 
-
-
-
-//		if(XYZGyRaw.startpoint != XYZGyRaw.nextpoint && flagact == TRUE)
 		if(XYZGyRaw.startpoint != XYZGyRaw.nextpoint)
 		{
 
 			TogLED;
-//			XYZGyRaw.xrrate = lsm6dsm_from_1000dps_to_dps(XYZGyRaw.GryRwa[XYZGyRaw.startpoint].xraw) - XYZGyRaw.xrrate0;
-//
-//			XYZGyRaw.yrrate = lsm6dsm_from_1000dps_to_dps(XYZGyRaw.GryRwa[XYZGyRaw.startpoint].yraw) - XYZGyRaw.yrrate0;
-			
-//			XYZGyRaw.zrrate = lsm6dsm_from_1000dps_to_dps(XYZGyRaw.GryRwa[XYZGyRaw.startpoint].zraw) - XYZGyRaw.zrrate0;
-			
-			XYZGyRaw.zrrate = lsm6dsm_from_1000dps_to_dps(GryAvg) - XYZGyRaw.zrrate0;
+
+			XYZGyRaw.vecax = lsm6dsm_from_1000dps_to_dps(GryAvg) - XYZGyRaw.vecax0;
 
 			XYZGyRaw.startpoint++;
 			XYZGyRaw.startpoint %= DryDatalebgth;
 
+			if(XYZGyRaw.GryRwa[XYZGyRaw.nextpoint].zraw < XYZGyRaw.zrrate0)
+			{
+				XYZGyRaw.vecax = 0 - XYZGyRaw.vecax;
+			}
 
-//			XYZGyRaw.xangle = getAngle(&DryX, XYZGyRaw.accxangle, XYZGyRaw.xrrate, Dt); // Calculate the angle using a Kalman filter
-//			XYZGyRaw.accxangle = XYZGyRaw.xangle;
-//
-//			XYZGyRaw.yangle = getAngle(&DryY, XYZGyRaw.accyangle, XYZGyRaw.yrrate, Dt); // Calculate the angle using a Kalman filter
-//			XYZGyRaw.accyangle = XYZGyRaw.yangle;
-//
-//			XYZGyRaw.zangle = getAngle(&DryY, XYZGyRaw.acczangle, XYZGyRaw.yrrate, Dt); // Calculate the angle using a Kalman filter
-//			XYZGyRaw.acczangle = XYZGyRaw.zangle;
-
-
-//			XYZGyRaw.xanglenofilter += XYZGyRaw.xrrate * Dt; // Calculate gyro angle without any filter
-//			XYZGyRaw.yanglenofilter += XYZGyRaw.yrrate * Dt;
-//			XYZGyRaw.zanglenofilter += XYZGyRaw.zrrate * Dt;
-
-
-//			XYZGyRaw.xangle = CpSysMain*(XYZGyRaw.xangle + XYZGyRaw.xrrate * Dt);// - CpSysMin * XYZGyRaw.xangle; // Calculate gyro angle without any filter
-//			XYZGyRaw.yangle = CpSysMain*(XYZGyRaw.yangle + XYZGyRaw.yrrate * Dt);// - CpSysMin * XYZGyRaw.yangle;
-//			if(XYZGyRaw.zrrate >= 0)
-//				{
-				tempangle = XYZGyRaw.zrrate * Dt;
-				if(fabs(tempangle) >= 0.003 )
-					{
-						XYZGyRaw.zangle = CpSysMain*(XYZGyRaw.zangle + tempangle) + CpSysMin * XYZGyRaw.zangle;
-					}
-				
-//			XYZGyRaw.zangle = CpSysMain*(XYZGyRaw.zangle + XYZGyRaw.zrrate * Dt) + CpSysMin * XYZGyRaw.zangle;
-
-//				}
-//			else
-//				{
-//				XYZGyRaw.zangle = CpSysMain*(XYZGyRaw.zangle + XYZGyRaw.zrrate * Dt) + CpSysMin * XYZGyRaw.zangle;
-//
-//				}
-
-
-//			XYZGyRaw.xangle += XYZGyRaw.xrrate * Dt;
-//
-//			XYZGyRaw.yangle += XYZGyRaw.yrrate * Dt;
-
-//			XYZGyRaw.zangle += XYZGyRaw.zrrate * Dt;// - CpSysMin * XYZGyRaw.zangle;
-
-//			angletemp = sqrt(pow(XYZGyRaw.xangle, 2) + pow(XYZGyRaw.yangle, 2) + pow(XYZGyRaw.zangle, 2));
-////
-////
-//			if( XYZGyRaw.zrrate < 0)
-//				{
-//					angletemp = 0 - angletemp;
-//				}
-//
-//			if(angletemp <= 1 && angletemp >= -1)
-//				{
-//					angletemp = 0;
-//				}
-////			
-//			XYZGyRaw.angle += angletemp;
-//
-//			UpdateData.valvedegree = (int32_t) XYZGyRaw.angle;
-//			ModeSet(NormalMode);
-//			memset(buf,0,sizeof(buf));
-//			sprintf((char *)buf, "%f,%f,%f,%f,%f,%f\r\n", XYZGyRaw.xrrate0, XYZGyRaw.yrrate0, XYZGyRaw.zrrate0, XYZGyRaw.xrrate, XYZGyRaw.yrrate, XYZGyRaw.zrrate);
-//			HAL_UART_TransmitStr(LPUART2, buf, 1000);
+			tempangle = XYZGyRaw.vecax * Dt;
+			if(fabs(tempangle) >= 0.003 )
+				{
+					XYZGyRaw.zangle = CpSysMain*(XYZGyRaw.zangle + tempangle) + CpSysMin * XYZGyRaw.zangle;
+				}
 
 		}
 
-
-
-
-
-
+		if(status.wake_up_src.sleep_state_ia == true)
+		{
+			flagact = FALSE;
+			onemotion = FALSE;
+//				lsm6dsm_gy_sleep_mode_set(SPI2, 1);
+			FlagStatusClear(&FlagGlobal, Flag_MotionDetect);
+			FlagStatusSet(&FlagGlobal, Flag_WirlessCom);
+			LEDOff;
+			UpdateData.valvedegree = (int32_t) XYZGyRaw.zangle;
+//				ModeSet(NormalMode);
+//				memset(buf,0,sizeof(buf));
+//				sprintf((char *)buf, "abc:%f,%f,%f,%f, %d\r\n", XYZGyRaw.xangle, XYZGyRaw.yangle, XYZGyRaw.zangle, XYZGyRaw.angle, UpdateData.valvedegree);
+//				HAL_UART_TransmitStr(LPUART2, buf, 1000);
 		}
+
+	}
 
 }
 
@@ -936,7 +833,7 @@ void GetGsense(void)
 //					c = fabs(zLmg[i] - zLmg[i-1]);
 //					if(fabs(xLmg[i] - xLmg[i-1])<10 &&
 //					   fabs(yLmg[i] - yLmg[i-1])<10 &&
-//					   fabs(zLmg[i] - zLmg[i-1])<10)//ÅÐ¶ÏÊÇ·ñÆ½ÎÈ
+//					   fabs(zLmg[i] - zLmg[i-1])<10)//ï¿½Ð¶ï¿½ï¿½Ç·ï¿½Æ½ï¿½ï¿½
 //						{
 //							xsum += xLmg[i-1];
 //							ysum += yLmg[i-1];
@@ -1016,7 +913,7 @@ void GetGsense(void)
 //}
 
 
-//void Yijielvbo(float angle_m, float gyro_m)//²É¼¯ºó¼ÆËãµÄ½Ç¶ÈºÍ½Ç¼ÓËÙ¶È
+//void Yijielvbo(float angle_m, float gyro_m)//ï¿½É¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä½Ç¶ÈºÍ½Ç¼ï¿½ï¿½Ù¶ï¿½
 //{
 //     angle1 = K1 * angle_m+ (1-K1) * (angle1 + gyro_m * dt);
 //}
@@ -1029,7 +926,7 @@ void GetGsense(void)
 
 
 
-//void Erjielvbo(float angle_m,float gyro_m)//²É¼¯ºó¼ÆËãµÄ½Ç¶ÈºÍ½Ç¼ÓËÙ¶È
+//void Erjielvbo(float angle_m,float gyro_m)//ï¿½É¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä½Ç¶ÈºÍ½Ç¼ï¿½ï¿½Ù¶ï¿½
 //{
 //    x1=(angle_m-angle2)*(1-K2)*(1-K2);
 //    y1=y1+x1*dt;
@@ -1039,8 +936,8 @@ void GetGsense(void)
 
 
 
-//¿¨¶ûÂüÂË²¨
-//void Kalman_Filter(float angle_m, float gyro_m)//angleAx ºÍ gyroGy
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½
+//void Kalman_Filter(float angle_m, float gyro_m)//angleAx ï¿½ï¿½ gyroGy
 //{
 //angle+=(gyro_m-q_bias) * dt;
 //angle_err = angle_m - angle;
@@ -1063,20 +960,20 @@ void GetGsense(void)
 //P[0][1] -= K_0 * t_1;
 //P[1][0] -= K_1 * t_0;
 //P[1][1] -= K_1 * t_1;
-//angle += K_0 * angle_err; //×îÓÅ½Ç¶È
+//angle += K_0 * angle_err; //ï¿½ï¿½ï¿½Å½Ç¶ï¿½
 //q_bias += K_1 * angle_err;
-//angle_dot = gyro_m-q_bias;//×îÓÅ½ÇËÙ¶È
+//angle_dot = gyro_m-q_bias;//ï¿½ï¿½ï¿½Å½ï¿½ï¿½Ù¶ï¿½
 //}
 
 
 //void getangle()
 //{
-//    accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);//¶ÁÈ¡Ô­Ê¼6¸öÊý¾Ý
-//    angleAx=atan2(ax,az)*180/PI;//¼ÆËãÓëxÖá¼Ð½Ç
-//    gyroGy=-gy/131.00;//¼ÆËã½ÇËÙ¶È
-//    Yijielvbo(angleAx,gyroGy);//Ò»½×ÂË²¨
-//    Erjielvbo(angleAx,gyroGy);//¶þ½×ÂË²¨
-//    Kalman_Filter(angleAx,gyroGy);   //¿¨¶ûÂüÂË²¨
+//    accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);//ï¿½ï¿½È¡Ô­Ê¼6ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//    angleAx=atan2(ax,az)*180/PI;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½xï¿½ï¿½Ð½ï¿½
+//    gyroGy=-gy/131.00;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+//    Yijielvbo(angleAx,gyroGy);//Ò»ï¿½ï¿½ï¿½Ë²ï¿½
+//    Erjielvbo(angleAx,gyroGy);//ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½
+//    Kalman_Filter(angleAx,gyroGy);   //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½
 //}
 
 
